@@ -1,0 +1,119 @@
+import cv2
+import numpy as np
+from scipy.signal import find_peaks
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+
+
+# Load a pre-recorded video or use live camera feed
+cap = cv2.VideoCapture('input.mp4')
+
+# Variables to store the PPG signal
+ppg_signal = []
+
+while(cap.isOpened()):
+    ret, frame = cap.read()
+    if not ret:
+        break
+
+    # Convert the frame to grayscale (or focus on a specific color channel for PPG)
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # Define the top-left corner of the rectangle (x, y) and the size (width, height)
+    top_left_corner = (100, 100)  # (x, y)
+    width = 125
+    height = 50
+
+    # Define the bottom-right corner in the top-left corner and the size
+    bottom_right_corner = (top_left_corner[0] + width, top_left_corner[1] + height)
+
+    # Draw the rectangle on the image
+    rectangle_color = (0, 0, 255)  # Red color in BGR
+    rectangle_thickness = 2  # Thickness of the rectangle's border
+    cv2.rectangle(frame, top_left_corner, bottom_right_corner, rectangle_color, rectangle_thickness)
+
+    # Display the frame
+    cv2.imshow('Frame', frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+    # Region of interest (e.g., forehead) to extract the PPG signal
+    roi = gray_frame[top_left_corner[0]:bottom_right_corner[0], top_left_corner[1]:bottom_right_corner[1]]  # Example coordinates for ROI
+
+    # Calculate the mean color intensity of the ROI (this is your PPG signal)
+    mean_intensity = np.median(roi)
+    ppg_signal.append(mean_intensity)
+
+cap.release()
+cv2.destroyAllWindows()
+
+# Convert the PPG signal list to a numpy array
+ppg_signal = np.array(ppg_signal)
+
+# Preprocess the PPG signal (e.g., detrending, filtering)
+# Use signal processing techniques like Butterworth filtering, detrending, etc.
+
+# Extract features like Pulse Transit Time (PTT)
+# For simplicity, let's assume we're only using peak intervals as a feature
+peaks, _ = find_peaks(ppg_signal, distance=20)  # Find peaks in the PPG signal
+ptt = np.diff(peaks)  # Compute PTT as the difference between peaks
+
+# Generate synthetic BP values (for demo purposes, replace with real data)
+# In practice, you would have real BP measurements corresponding to your PTT values
+bp_values = np.random.normal(120, 5, len(ptt))  # Example BP values
+print(len(bp_values))
+
+# Train a regression model
+X_train, X_test, y_train, y_test = train_test_split(ptt.reshape(-1, 1), bp_values, test_size=0.2)
+model = RandomForestRegressor()
+model.fit(X_train, y_train)
+
+# Predict BP on test set
+bp_predictions = model.predict(X_test)
+
+# Evaluate the model (e.g., mean squared error, R-squared, etc.)
+# Evaluate the model
+mse = mean_squared_error(y_test, bp_predictions)
+r2 = r2_score(y_test, bp_predictions)
+
+print(f"Mean Squared Error (MSE): {mse}")
+print(f"R-squared (R²): {r2}")
+
+# Plotting the results
+plt.figure(figsize=(10, 6))
+
+# Plot actual vs predicted BP values
+plt.scatter(y_test, bp_predictions, color='blue', label='Predicted vs Actual')
+plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], 'r--', label='Ideal Fit Line')
+
+plt.title('Actual vs Predicted Blood Pressure')
+plt.xlabel('Actual BP')
+plt.ylabel('Predicted BP')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Plot PPG signal and peaks
+plt.figure(figsize=(12, 6))
+plt.plot(ppg_signal, label='PPG Signal')
+plt.plot(peaks, ppg_signal[peaks], 'rx', label='Detected Peaks')
+
+plt.title('PPG Signal with Detected Peaks')
+plt.xlabel('Frame Index')
+plt.ylabel('Mean Intensity')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Additional advanced analysis (if applicable)
+# For example, exploring feature importance if using a RandomForestRegressor
+importances = model.feature_importances_
+
+plt.figure(figsize=(8, 6))
+plt.bar(range(len(importances)), importances)
+plt.title('Feature Importances')
+plt.xlabel('Feature Index')
+plt.ylabel('Importance')
+plt.show()
