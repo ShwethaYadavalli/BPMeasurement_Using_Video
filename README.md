@@ -50,12 +50,12 @@ The project includes the following visualizations:
 **Signal Preprocessing**: Additional signal processing techniques like Butterworth filtering, detrending, etc., can be applied to enhance the quality of the PPG signal.
 
 ## Future Work
-1. Future enhancements to the project could include:
+Future enhancements to the project could include:
 
-2. Incorporating real BP measurement data to train the model.
+1. Incorporating real BP measurement data to train the model.
 
-3. Testing the approach with live video feeds for real-time BP monitoring.
+2. Testing the approach with live video feeds for real-time BP monitoring.
 
-4. Implementing advanced signal processing techniques to improve PPG signal quality.
+3. Implementing advanced signal processing techniques to improve PPG signal quality.
 
-5. Extending the model to consider additional physiological signals.
+4. Extending the model to consider additional physiological signals.
